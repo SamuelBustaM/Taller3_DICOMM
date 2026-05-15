@@ -1,11 +1,13 @@
 # Procesador DICOM — Informática 2: Unidad 3
 
-Taller Evaluativo — Introducción a la Informática Médica
+**Taller Evaluativo — Introducción a la Informática Médica**
 
-Integrantes
+**Integrantes**
 Samuel Bustamante Muñoz - s.bustamante@udea.edu.co
 
-1. Descripción del Proyecto
+---
+
+## 1. Descripción del Proyecto
 
 Este proyecto implementa una aplicación en Python orientada a objetos (ProcesadorDICOM) que automatiza el flujo de trabajo con archivos médicos en formato DICOM.
 
@@ -20,33 +22,48 @@ El programa realiza los siguientes pasos de forma organizada:
 
 ---
 
-2. Entorno de ejecución
+## 2. Entorno de ejecución
 
-¿Por qué se usa un entorno virtual?
+### ¿Por qué se usa un entorno virtual?
 
 Un entorno virtual (`venv`) es una instalación aislada de Python que contiene sus propias librerías, independiente del sistema operativo y de otros proyectos. Esto evita conflictos de versiones entre dependencias de distintos proyectos y garantiza que el código se ejecute siempre en el mismo entorno, sin importar la máquina donde se corra.
+
+### Crear y activar el entorno virtual
+
+Desde la terminal, dentro de la carpeta del proyecto:
+
+```bash
+# 1. Crear el entorno virtual en una carpeta llamada 'venv'
+python -m venv venv
+
+# 2. Activar el entorno virtual
+venv\Scripts\activate
+```
+
+Una vez activo, el prompt de la terminal mostrará `(venv)` al inicio, indicando que el entorno está listo.
 
 ### Instalar las dependencias
 
 Con el entorno virtual activo, se instalan todas las librerías necesarias:
-Librerías utilizadas:
 
-| pydicom, numpy, pandas, opencv-python |
+```bash
+pip install numpy pandas opencv-python matplotlib pydicom
+```
 
 ---
 
-3. Instalación y uso
+## 3. Instalación y uso
 
-Ejecutar el procesador
+### Ejecutar el procesador
 
-El codigo está configurado para leer archivos DICOM desde la carpeta "data_store/data/" y guardar los resultados en "output".
+El código está configurado para leer archivos DICOM desde la carpeta `data_store/data/` y guardar los resultados en `output`.
 
-python
-directorio_dicom = "data_store/data"   ; carpeta con archivos .dcm
-carpeta_salida   = "output"            ; carpeta donde se guardan los resultados
+```python
+directorio_dicom = "data_store/data"   # carpeta con archivos .dcm
+carpeta_salida   = "output"            # carpeta donde se guardan los resultados
+```
 
-
-Estructura de salida
+### Estructura de salida
 
 ```
 output/
@@ -55,11 +72,11 @@ output/
 └── metadatos_dicom.csv     ← Tabla con todos los metadatos extraídos
 ```
 
-Estructura del repositorio
+### Estructura del repositorio
 
 ```
 TALLER3_DICOM/
-├── main.py     ← Script principal (clase ProcesadorDICOM)
+├── main.py                 ← Script principal (clase ProcesadorDICOM)
 ├── data_store/
 │   └── data/               ← Carpeta para archivos DICOM de entrada
 └── output/                 ← Se genera automáticamente al ejecutar
@@ -71,8 +88,8 @@ TALLER3_DICOM/
 ---
 
 ## 4. Preguntas teóricas
-   
-4.1 ¿Por qué DICOM y HL7 son cruciales para la interoperabilidad en salud y en qué se diferencian?
+
+### 4.1 ¿Por qué DICOM y HL7 son cruciales para la interoperabilidad en salud y en qué se diferencian?
 
 La interoperabilidad en sistemas de salud es, la capacidad de que distintos equipos, software e instituciones intercambien información de forma coherente dependiendo fundamentalmente de estándares abiertos y ampliamente adoptados. DICOM y HL7 son los dos pilares principales, aunque operan en capas distintas.
 
@@ -80,7 +97,7 @@ La interoperabilidad en sistemas de salud es, la capacidad de que distintos equi
 
 *HL7 (Health Level Seven)*, en sus versiones 2.x y la más moderna FHIR (Fast Healthcare Interoperability Resources), es un estándar orientado al intercambio de mensajes clínicos y administrativos entre sistemas de información hospitalaria (HIS, LIS, RIS, EHR). Gestiona datos como órdenes médicas, resultados de laboratorio, altas, diagnósticos, medicaciones y registros de pacientes. HL7 FHIR, en particular, usa recursos basados en API REST y JSON/XML, lo que facilita la integración con aplicaciones web modernas.
 
-Diferencia conceptual:
+**Diferencia conceptual:**
 
 | Aspecto | DICOM | HL7 / FHIR |
 |---------|-------|------------|
@@ -94,9 +111,9 @@ En la práctica clínica ambos coexisten: cuando un médico solicita una tomogra
 
 ---
 
-4.2 Ventajas, limitaciones y escenarios de uso de la ecualización de histograma y la detección de bordes con Canny en imágenes médicas
+### 4.2 Ventajas, limitaciones y escenarios de uso de la ecualización de histograma y la detección de bordes con Canny en imágenes médicas
 
-Ecualización de histograma 
+#### Ecualización de histograma
 
 La ecualización de histograma redistribuye la intensidad de los píxeles para que la imagen utilice todo el rango dinámico disponible [0,255]. El efecto práctico es un mayor contraste global.
 
@@ -117,19 +134,19 @@ La ecualización de histograma redistribuye la intensidad de los píxeles para q
 
 **Escenarios donde puede ser perjudicial:**
 - Análisis cuantitativo de densidad ósea o grasa (distorsiona los valores reales).
-- Imágenes de resonancia magnética donde las variaciones de intensidad tienen significado diagnóstico .
+- Imágenes de resonancia magnética donde las variaciones de intensidad tienen significado diagnóstico.
 - Cualquier flujo en el que los valores de píxel deban conservar su significado físico original.
 
 ---
 
-#### Detección de bordes con Canny 
+#### Detección de bordes con Canny
 
 El algoritmo de Canny detecta cambios abruptos de intensidad (gradientes), marcando los contornos de estructuras en la imagen.
 
 **Justificación de los umbrales utilizados (threshold1=50, threshold2=150):**
 - La razón 1:3 entre umbrales es la recomendada por el propio Canny para suprimir bordes irrelevantes.
-- threshold1=50 , conserva bordes suaves (tejidos blandos, contornos de órganos).
-- threshold2=150 , descarta ruido y retiene bordes fuertes (hueso, contraste vascular).
+- threshold1=50, conserva bordes suaves (tejidos blandos, contornos de órganos).
+- threshold2=150, descarta ruido y retiene bordes fuertes (hueso, contraste vascular).
 - Este par es un punto de partida estándar en imágenes de rayos X y TC; deben ajustarse según la modalidad específica.
 
 **Ventajas:**
