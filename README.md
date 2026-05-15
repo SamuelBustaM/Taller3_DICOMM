@@ -7,7 +7,7 @@ Samuel Bustamante Muñoz - s.bustamante@udea.edu.co
 
 1. Descripción del Proyecto
 
-Este proyecto implementa una aplicación en Python orientada a objetos (`ProcesadorDICOM`) que automatiza el flujo de trabajo con archivos médicos en formato DICOM.
+Este proyecto implementa una aplicación en Python orientada a objetos (ProcesadorDICOM) que automatiza el flujo de trabajo con archivos médicos en formato DICOM.
 
 El programa realiza los siguientes pasos de forma organizada:
 
