@@ -110,6 +110,23 @@ class ProcesadorDICOM:
         for ds in self.datasets:
 
             try:
+                if not hasattr(ds, "PixelData"):
+                    intensidades.append(None)
+                    continue
+
+                # Evitar formatos comprimidos problemáticos
+                transfer_syntax = getattr(
+                    ds.file_meta,
+                    "TransferSyntaxUID",
+                    ""
+                )
+
+                transfer_syntax = str(transfer_syntax)
+
+                if "JPEG" in transfer_syntax or "1.2.840.10008.1.2.4" in transfer_syntax:
+                    intensidades.append(None)
+                    continue
+
                 promedio = np.mean(ds.pixel_array)
 
                 intensidades.append(
@@ -140,7 +157,20 @@ class ProcesadorDICOM:
             nombre_base = ds.filepath.stem
 
             try:
-                pixels = ds.pixel_array
+                if not hasattr(ds, "PixelData"):
+                    continue
+
+                transfer_syntax = getattr(
+                    ds.file_meta,
+                    "TransferSyntaxUID",
+                    ""
+                )
+
+                transfer_syntax = str(transfer_syntax)
+
+                if "JPEG" in transfer_syntax or "1.2.840.10008.1.2.4" in transfer_syntax:
+                    print(f"  [Omitido] Compresión no soportada: {ds.filepath.name}")
+                    continue
 
                 # Conversión básica para imágenes RGB o multiframe.
                 if pixels.ndim == 3:
