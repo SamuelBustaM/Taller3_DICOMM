@@ -172,6 +172,8 @@ class ProcesadorDICOM:
                     print(f"  [Omitido] Compresión no soportada: {ds.filepath.name}")
                     continue
 
+                pixels = ds.pixel_array
+
                 # Conversión básica para imágenes RGB o multiframe.
                 if pixels.ndim == 3:
 
@@ -229,7 +231,7 @@ class ProcesadorDICOM:
             except Exception as e:
 
                 print(
-                    f"  [OMITIDO] Sin píxeles en "
+                    f"  [Omitido] Sin píxeles en "
                     f"'{ds.filepath.name}': {e}"
                 )
 
@@ -257,7 +259,7 @@ class ProcesadorDICOM:
         """
         print("\n" + "=" * 60)
 
-        print("  RESUMEN DE METADATOS DICOM")
+        print("  Resumen de metadatos con DICOM")
 
         print("=" * 60)
 
