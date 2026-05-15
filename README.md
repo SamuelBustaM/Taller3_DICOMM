@@ -31,7 +31,7 @@ Un entorno virtual (`venv`) es una instalación aislada de Python que contiene s
 Con el entorno virtual activo, se instalan todas las librerías necesarias:
 Librerías utilizadas:
 
-| pydicom, numpy, pamdas, opencv-python |
+| pydicom, numpy, pandas, opencv-python |
 
 ---
 
@@ -42,8 +42,8 @@ Ejecutar el procesador
 El codigo está configurado para leer archivos DICOM desde la carpeta "data_store/data/" y guardar los resultados en "output".
 
 python
-directorio_dicom = "data_store/data"   # carpeta con archivos .dcm
-carpeta_salida   = "output"            # carpeta donde se guardan los resultados
+directorio_dicom = "data_store/data"   ; carpeta con archivos .dcm
+carpeta_salida   = "output"            ; carpeta donde se guardan los resultados
 
 
 Estructura de salida
@@ -70,7 +70,7 @@ TALLER3_DICOM/
 
 ---
 
-4. Preguntas teóricas
+## 4. Preguntas teóricas
    
 4.1 ¿Por qué DICOM y HL7 son cruciales para la interoperabilidad en salud y en qué se diferencian?
 
@@ -96,7 +96,7 @@ En la práctica clínica ambos coexisten: cuando un médico solicita una tomogra
 
 4.2 Ventajas, limitaciones y escenarios de uso de la ecualización de histograma y la detección de bordes con Canny en imágenes médicas
 
-# Ecualización de histograma 
+Ecualización de histograma 
 
 La ecualización de histograma redistribuye la intensidad de los píxeles para que la imagen utilice todo el rango dinámico disponible [0,255]. El efecto práctico es un mayor contraste global.
 
@@ -127,7 +127,7 @@ La ecualización de histograma redistribuye la intensidad de los píxeles para q
 El algoritmo de Canny detecta cambios abruptos de intensidad (gradientes), marcando los contornos de estructuras en la imagen.
 
 **Justificación de los umbrales utilizados (threshold1=50, threshold2=150):**
-- La razón 1:3 entre umbrales es la recomendada por el propio Canny para suprimir bordes espurios.
+- La razón 1:3 entre umbrales es la recomendada por el propio Canny para suprimir bordes irrelevantes.
 - threshold1=50 , conserva bordes suaves (tejidos blandos, contornos de órganos).
 - threshold2=150 , descarta ruido y retiene bordes fuertes (hueso, contraste vascular).
 - Este par es un punto de partida estándar en imágenes de rayos X y TC; deben ajustarse según la modalidad específica.
@@ -161,7 +161,7 @@ El algoritmo de Canny detecta cambios abruptos de intensidad (gradientes), marca
 
 1. **Tags faltantes por anonimización:** Muchos archivos DICOM de acceso público tienen tags como "PatientName" o "PatientID" removidos o reemplazados. Fue necesario implementar manejo defensivo para todos los tags con valores por defecto ("N/A").
 
-2. **Archivos DICOM sin datos de píxeles:** Modalidades como SR (Structured Report) o PR (Presentation State) no contienen "pixel_array". El manejo con bloques "try/except" fue esencial para no interrumpir el procesamiento completo.
+2. **Archivos DICOM sin datos de píxeles:** Modalidades como SR (Structured Report) o PR (Presentation State) no contienen "pixel_array". El manejo con bloques "try/except" fue importante para no interrumpir el procesamiento completo.
 
 3. **Profundidad de bits y normalización:** Las imágenes DICOM en 12 o 16 bits no pueden usarse directamente con OpenCV. La normalización a uint8 debe realizarse preservando el rango dinámico real de la imagen para no perder información de contraste.
 
@@ -169,7 +169,7 @@ El algoritmo de Canny detecta cambios abruptos de intensidad (gradientes), marca
 
 ### Importancia de las herramientas Python para análisis de datos médicos
 
-Python se ha convertido en el lenguaje estándar de facto en informática médica e investigación clínica por varias razones:
+Python se ha convertido en el lenguaje estándar en informática médica e investigación clínica por varias razones:
 
 - **pydicom** permite leer y manipular el estándar DICOM sin depender de software propietario, democratizando el acceso a imágenes médicas para investigación y desarrollo.
 - **NumPy** proporciona operaciones vectorizadas sobre arreglos de píxeles de forma eficiente, fundamental cuando se manejan volúmenes de tomografías de cientos de megabytes.
