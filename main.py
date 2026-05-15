@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import cv2
 import pydicom
+from pydicom.errors import InvalidDicomError
 from pathlib import Path
 
 class ProcesadorDICOM:
@@ -45,7 +46,9 @@ class ProcesadorDICOM:
     def cargar_archivos(self):
         """
         Busca archivos DICOM en el directorio indicado y carga cada
-        dataset utilizando pydicom. Los archivos inválidos se omiten.
+        dataset completo (metadatos + píxeles) utilizando pydicom.
+        Se distingue entre archivos que no son DICOM válidos y errores
+        inesperados para facilitar el diagnóstico de problemas.
         """
         archivos = [p for p in self.directorio.rglob("*") if p.is_file()]
         print(f"Archivos encontrados: {len(archivos)}")
@@ -54,14 +57,21 @@ class ProcesadorDICOM:
 
         for ruta in archivos:
             try:
+                # Leer el archivo completo, incluyendo los datos de píxeles,
+                # para que pixel_array esté disponible en pasos posteriores.
                 ds = pydicom.dcmread(str(ruta))
                 ds.filepath = ruta
 
                 self.datasets.append(ds)
                 cargados += 1
 
+            except InvalidDicomError:
+                # El archivo existe pero no cumple el estándar DICOM.
+                print(f"  [OMITIDO] No es un DICOM válido: {ruta.name}")
+
             except Exception as e:
-                print(f"  [OMITIDO] {ruta.name}: {e}")
+                # Cualquier otro error inesperado (permisos, disco, etc.).
+                print(f"  [OMITIDO] Error inesperado en {ruta.name}: {e}")
 
         print(f"Archivos DICOM cargados: {cargados}")
 
@@ -114,14 +124,8 @@ class ProcesadorDICOM:
                     intensidades.append(None)
                     continue
 
-                # Evitar formatos comprimidos problemáticos
-                transfer_syntax = getattr(
-                    ds.file_meta,
-                    "TransferSyntaxUID",
-                    ""
-                )
-
-                transfer_syntax = str(transfer_syntax)
+                # Evitar formatos con compresión JPEG no soportada nativamente.
+                transfer_syntax = str(getattr(ds.file_meta, "TransferSyntaxUID", ""))
 
                 if "JPEG" in transfer_syntax or "1.2.840.10008.1.2.4" in transfer_syntax:
                     intensidades.append(None)
@@ -146,8 +150,14 @@ class ProcesadorDICOM:
         """
         Aplica normalización, ecualización de histograma y detección
         de bordes con Canny a las imágenes DICOM válidas.
+
+        Justificación de umbrales Canny (threshold1=50, threshold2=150):
+            - La razón recomendada entre umbrales es 1:3.
+            - threshold1=50 conserva bordes suaves de tejidos blandos.
+            - threshold2=150 suprime ruido y conserva bordes fuertes
+              como hueso y contornos vasculares relevantes.
         """
-        CANNY_LOW = 50
+        CANNY_LOW  = 50
         CANNY_HIGH = 150
 
         procesadas = 0
@@ -160,60 +170,46 @@ class ProcesadorDICOM:
                 if not hasattr(ds, "PixelData"):
                     continue
 
-                transfer_syntax = getattr(
-                    ds.file_meta,
-                    "TransferSyntaxUID",
-                    ""
-                )
-
-                transfer_syntax = str(transfer_syntax)
+                # Evitar formatos con compresión JPEG no soportada nativamente.
+                transfer_syntax = str(getattr(ds.file_meta, "TransferSyntaxUID", ""))
 
                 if "JPEG" in transfer_syntax or "1.2.840.10008.1.2.4" in transfer_syntax:
-                    print(f"  [Omitido] Compresión no soportada: {ds.filepath.name}")
+                    print(f"  [OMITIDO] Compresión no soportada: {ds.filepath.name}")
                     continue
 
                 pixels = ds.pixel_array
 
-                # Conversión básica para imágenes RGB o multiframe.
+                # Conversión a escala de grises para imágenes RGB o multiframe.
                 if pixels.ndim == 3:
 
                     if pixels.shape[-1] == 3:
-                        pixels = cv2.cvtColor(
-                            pixels,
-                            cv2.COLOR_RGB2GRAY
-                        )
+                        pixels = cv2.cvtColor(pixels, cv2.COLOR_RGB2GRAY)
 
                     else:
                         pixels = pixels[0]
 
-                # Normalización al rango [0,255].
+                # Normalización al rango [0, 255] requerido por OpenCV.
+                # Las imágenes DICOM suelen estar en 12 o 16 bits.
                 arr = pixels.astype(np.float32)
 
                 minv, maxv = arr.min(), arr.max()
 
                 if maxv != minv:
-
                     img_uint8 = (
                         (arr - minv) / (maxv - minv) * 255
                     ).astype(np.uint8)
 
                 else:
+                    # Imagen completamente uniforme: se devuelve imagen negra.
+                    img_uint8 = np.zeros_like(arr, dtype=np.uint8)
 
-                    img_uint8 = np.zeros_like(
-                        arr,
-                        dtype=np.uint8
-                    )
-
-                # Procesamiento de contraste y bordes.
+                # Ecualización de histograma: mejora el contraste global.
                 img_ecualizada = cv2.equalizeHist(img_uint8)
 
-                img_bordes = cv2.Canny(
-                    img_ecualizada,
-                    CANNY_LOW,
-                    CANNY_HIGH
-                )
+                # Detección de bordes: resalta estructuras anatómicas.
+                img_bordes = cv2.Canny(img_ecualizada, CANNY_LOW, CANNY_HIGH)
 
-                # Exportación de imágenes procesadas.
+                # Guardado de imágenes resultantes como PNG.
                 cv2.imwrite(
                     str(self.salida_ecualizada / f"{nombre_base}_eq.png"),
                     img_ecualizada
@@ -229,11 +225,7 @@ class ProcesadorDICOM:
                 print(f"  Procesada: {ds.filepath.name}")
 
             except Exception as e:
-
-                print(
-                    f"  [Omitido] Sin píxeles en "
-                    f"'{ds.filepath.name}': {e}"
-                )
+                print(f"  [OMITIDO] Sin píxeles en '{ds.filepath.name}': {e}")
 
         print(f"Imágenes procesadas y guardadas: {procesadas}")
 
@@ -259,7 +251,7 @@ class ProcesadorDICOM:
         """
         print("\n" + "=" * 60)
 
-        print("  Resumen de metadatos con DICOM")
+        print("  Resumen de metadatos DICOM")
 
         print("=" * 60)
 
